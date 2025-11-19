@@ -141,6 +141,10 @@ service/webapp-service   NodePort    10.96.xxx.xxx   <none>        80:30080/TCP 
 # Get webapp pod name
 WEBAPP_POD=$(kubectl get pod -l app=webapp -o jsonpath="{.items[0].metadata.name}")
 
+# Install the required packages
+
+kubectl exec -it $WEBAPP_POD -- apt update && sudo apt install bind9-dnsutils -y
+
 # Test DNS resolution
 kubectl exec -it $WEBAPP_POD -- nslookup mysql-service
 

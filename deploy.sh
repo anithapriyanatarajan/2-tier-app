@@ -5,7 +5,7 @@ echo "Building Docker image..."
 docker build -t webapp:latest ./app
 
 echo "Loading image into kind cluster..."
-kind load docker-image webapp:latest
+kind load docker-image webapp:latest --name NAME_OF_YOUR_KIND_CLUSTER
 
 echo "Deploying MySQL..."
 kubectl apply -f k8s/mysql-deployment.yaml
