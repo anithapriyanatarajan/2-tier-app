@@ -1,0 +1,17 @@
+{{- if .Values.mysql.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mysql.service.name }}
+  labels:
+    {{- include "2-tier-app.mysql.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.mysql.service.type }}
+  ports:
+  - port: {{ .Values.mysql.service.port }}
+    targetPort: {{ .Values.mysql.service.port }}
+    protocol: TCP
+    name: mysql
+  selector:
+    {{- include "2-tier-app.mysql.selectorLabels" . | nindent 4 }}
+{{- end }}

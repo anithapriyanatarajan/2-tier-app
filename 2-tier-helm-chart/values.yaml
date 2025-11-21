@@ -1,0 +1,114 @@
+# Default values for 2-tier-app
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# MySQL Database Configuration
+mysql:
+  enabled: true
+  replicas: 1
+  
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    name: mysql-service
+    type: ClusterIP
+    port: 3306
+  
+  # Database credentials (in production, use external secrets!)
+  auth:
+    rootPassword: rootpassword
+    database: keyvaluedb
+    username: dbuser
+    password: dbpassword
+  
+  # Persistent storage configuration
+  persistence:
+    enabled: true
+    storageClass: ""  # Use default storage class
+    accessMode: ReadWriteOnce
+    size: 1Gi
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  
+  # Labels for the MySQL deployment
+  labels:
+    app: mysql
+    tier: database
+
+# Web Application Configuration
+webapp:
+  enabled: true
+  replicas: 2
+  
+  image:
+    repository: webapp
+    tag: latest
+    pullPolicy: Never  # Use 'Never' for local kind cluster with locally built images
+  
+  service:
+    name: webapp-service
+    type: NodePort
+    port: 80
+    targetPort: 5000
+    nodePort: 30080
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+  
+  # Liveness probe configuration
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /api/health
+      port: 5000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Readiness probe configuration
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /api/health
+      port: 5000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Labels for the webapp deployment
+  labels:
+    app: webapp
+    tier: frontend
+
+# ConfigMap for application configuration
+config:
+  dbHost: mysql-service
+  dbPort: "3306"
+  dbName: keyvaluedb
+
+# Global settings
+nameOverride: ""
+fullnameOverride: ""
+
+# Namespace configuration
+namespace:
+  create: false
+  name: default

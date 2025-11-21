@@ -1,0 +1,16 @@
+apiVersion: v2
+name: 2-tier-app
+description: A 2-tier Flask web application with MySQL database demonstrating pod interconnection
+type: application
+version: 0.1.0
+appVersion: "1.0"
+keywords:
+  - flask
+  - mysql
+  - 2-tier
+  - webapp
+maintainers:
+  - name: Anitha Priya
+home: https://github.com/anithapriyanatarajan/2-tier-app
+sources:
+  - https://github.com/anithapriyanatarajan/2-tier-app

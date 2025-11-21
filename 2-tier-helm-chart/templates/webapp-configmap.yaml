@@ -1,0 +1,12 @@
+{{- if .Values.webapp.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "2-tier-app.fullname" . }}-webapp-config
+  labels:
+    {{- include "2-tier-app.webapp.labels" . | nindent 4 }}
+data:
+  DB_HOST: {{ .Values.config.dbHost | quote }}
+  DB_PORT: {{ .Values.config.dbPort | quote }}
+  DB_NAME: {{ .Values.config.dbName | quote }}
+{{- end }}
