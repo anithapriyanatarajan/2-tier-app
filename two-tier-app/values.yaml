@@ -1,0 +1,63 @@
+mysql:
+  replicaCount: 1
+
+  image:
+    repository: mysql
+    tag: "8.0"
+
+  rootPassword: rootpassword
+  database: keyvaluedb
+  user: dbuser
+  password: dbpassword
+
+  storageSize: 1Gi
+
+  service:
+    port: 3306
+    targetPort: 3306
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+webapp:
+  replicaCount: 2
+
+  image:
+    repository: webapp
+    tag: latest
+    pullPolicy: Never   # For local dev or kind
+
+  containerPort: 5000
+
+  db:
+    host: "{{ .Release.Name }}-mysql-service"   # overridden by Helm at runtime
+    port: "3306"
+    name: keyvaluedb
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+  probes:
+    liveness:
+      path: /api/health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readiness:
+      path: /api/health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30080
