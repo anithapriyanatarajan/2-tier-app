@@ -4,7 +4,8 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-webapp-config
 data:
-  DB_HOST: {{ .Values.webapp.db.host | quote }}
+  # FIXED: DB_HOST must be templated here, not in values.yaml
+  DB_HOST: {{ printf "%s-mysql-service" .Release.Name | quote }}
   DB_PORT: {{ .Values.webapp.db.port | quote }}
   DB_NAME: {{ .Values.webapp.db.name | quote }}
 

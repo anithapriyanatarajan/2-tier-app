@@ -35,7 +35,6 @@ webapp:
   containerPort: 5000
 
   db:
-    host: "{{ .Release.Name }}-mysql-service"   # overridden by Helm at runtime
     port: "3306"
     name: keyvaluedb
 
