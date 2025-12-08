@@ -79,7 +79,7 @@ spec:
       volumes:
       - name: {{ .Release.Name }}-mysql-storage
         persistentVolumeClaim:
-          claimName: mysql-pvc
+          claimName: {{ .Release.Name }}-mysql-pvc
 ---
 apiVersion: v1
 kind: Service
