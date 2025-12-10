@@ -1,0 +1,101 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-webapp-config
+data:
+  # FIXED: DB_HOST must be templated here, not in values.yaml
+  DB_HOST: {{ printf "%s-mysql-service" .Release.Name | quote }}
+  DB_PORT: {{ .Values.webapp.db.port | quote }}
+  DB_NAME: {{ .Values.webapp.db.name | quote }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-webapp
+  labels:
+    app: {{ .Release.Name }}-webapp
+spec:
+  replicas: {{ .Values.webapp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-webapp
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-webapp
+    spec:
+      containers:
+      - name: webapp
+        image: "{{ .Values.webapp.image.repository }}:{{ .Values.webapp.image.tag }}"
+        imagePullPolicy: {{ .Values.webapp.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.webapp.containerPort }}
+          name: http
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Release.Name }}-webapp-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Release.Name }}-webapp-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Release.Name }}-webapp-config
+              key: DB_NAME
+
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: MYSQL_USER
+
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: MYSQL_PASSWORD
+
+        resources:
+          requests:
+            memory: {{ .Values.webapp.resources.requests.memory }}
+            cpu: {{ .Values.webapp.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.webapp.resources.limits.memory }}
+            cpu: {{ .Values.webapp.resources.limits.cpu }}
+
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.webapp.probes.liveness.path }}
+            port: {{ .Values.webapp.containerPort }}
+          initialDelaySeconds: {{ .Values.webapp.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.webapp.probes.liveness.periodSeconds }}
+
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.webapp.probes.readiness.path }}
+            port: {{ .Values.webapp.containerPort }}
+          initialDelaySeconds: {{ .Values.webapp.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.webapp.probes.readiness.periodSeconds }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-webapp-service
+spec:
+  type: {{ .Values.webapp.service.type }}
+  selector:
+    app: {{ .Release.Name }}-webapp
+  ports:
+  - port: {{ .Values.webapp.service.port }}
+    targetPort: {{ .Values.webapp.containerPort }}
+    nodePort: {{ .Values.webapp.service.nodePort }}
+    protocol: TCP
+

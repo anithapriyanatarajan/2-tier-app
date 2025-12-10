@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-mysql-secret
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: {{ .Values.mysql.rootPassword | quote }}
+  MYSQL_DATABASE: {{ .Values.mysql.database | quote }}
+  MYSQL_USER: {{ .Values.mysql.user | quote }}
+  MYSQL_PASSWORD: {{ .Values.mysql.password | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+   name: {{ .Release.Name }}-mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.mysql.storageSize }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mysql
+  labels:
+    app: {{ .Release.Name }}-mysql
+    tier: database
+spec:
+  replicas: {{ .Values.mysql.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mysql
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-mysql
+        tier: database
+    spec:
+      containers:
+      - name: mysql
+        image: "{{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}"
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mysql-secret
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: {{ .Release.Name }}-mysql-storage
+          mountPath: /var/lib/mysql
+        resources:
+          requests:
+            memory: {{ .Values.mysql.resources.requests.memory }}
+            cpu: {{ .Values.mysql.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.mysql.resources.limits.memory }}
+            cpu: {{ .Values.mysql.resources.limits.cpu }}
+      volumes:
+      - name: {{ .Release.Name }}-mysql-storage
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-mysql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mysql-service
+  labels:
+    app: {{ .Release.Name }}-mysql
+    tier: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.mysql.service.port }}
+    targetPort: {{ .Values.mysql.service.targetPort }}
+    protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-mysql
+    tier: database
